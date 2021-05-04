@@ -185,42 +185,42 @@ class AlbulaRequestHandler(BLRequestHandler):
             if len(params) == 1:
                 frame_number = int(params[0])
                 self.server.set_albula_frame_number(frame_number)
-                return '0 OK set_frame {}'.format(frame_number)
+                self.send_text_response('OK set_frame {}'.format(frame_number))
             elif len(params) == 0:
                 frame_number = self.server.get_albula_frame_number()
-                return '0 OK get_frame {}'.format(frame_number)
+                self.send_text_response('OK get_frame {}'.format(frame_number))
             else:
-                return '102 ERROR frame illegal_arguments'
+                self.send_text_response('ERROR:102 frame illegal_arguments')
         elif cmd == 'TEST':
             if len(params) == 2:
                 frame_index = int(params[0])
                 image_index = int(params[1])
                 errno = self.server.show_albula_test_image(frame_index, image_index)
                 if errno:
-                    return '{0} ERROR set_test_image {1} {2}'.format(errno, frame_index, image_index)
+                    self.send_text_response('ERROR:{} set_test {} {}'.format(errno, frame_index, image_index))
                 else:
-                    return '{0} OK set_test_image {1} {2}'.format(errno, frame_index, image_index)
+                    self.send_text_response('OK set_test {} {}'.format(frame_index, image_index))
             elif len(params) == 1:
                 frame_index = int(params[0])
                 image_path = self.server.get_albula_image_file(frame_index)
-                return '0 OK get_image {0} {1}'.format(frame_index, image_path)
+                self.send_text_response('OK get_test {} {}'.format(frame_index, image_path))
             else:
-                return '102 ERROR illegal_arguments'
+                self.send_text_response('ERROR:102 test illegal_arguments')
         elif cmd == 'IMAGE':
             if len(params) > 1:
                 frame_index = int(params[0])
                 image_path = " ".join(params[1:])
                 errno = self.server.set_albula_image_file(frame_index, image_path)
                 if errno:
-                    return '{0} ERROR set_image_file {1} {2}'.format(errno, frame_index, image_path)
+                    self.send_text_response('ERROR:{} set_image {} {}'.format(errno, frame_index, image_path))
                 else:
-                    return '{0} OK set_image_file {1} {2}'.format(errno, frame_index, image_path)
+                    self.send_text_response('OK set_image {} {}'.format(frame_index, image_path))
             elif len(params) == 1:
                 frame_index = int(params[0])
                 image_path = self.server.get_albula_image_file(frame_index)
-                return '0 OK get_image_file {0} {1}'.format(frame_index, image_path)
+                self.send_text_response('OK get_image {} {}'.format(frame_index, image_path))
             else:
-                return '102 ERROR illegal_arguments'
+                self.send_text_response('ERROR:102 image illegal_arguments')
         elif cmd == 'RECT':
             if len(params) == 5:
                 frame_index = int(params[0])
@@ -230,18 +230,18 @@ class AlbulaRequestHandler(BLRequestHandler):
                 height = int(params[4])
                 errno = self.server.set_albula_rect(frame_index, left, top, width, height)
                 if errno:
-                    return '{0} ERROR set_rect {1} {2} {3} {4} {5}'.format(errno, frame_index, left, top, width, height)
+                    self.send_text_response('ERROR:{} set_rect {} {} {} {} {}'.format(errno, frame_index, left, top, width, height))
                 else:
-                    return '{0} OK set_rect {1} {2} {3} {4} {5}'.format(errno, frame_index, left, top, width, height)
+                    self.send_text_response('OK set_rect {} {} {} {} {}'.format(frame_index, left, top, width, height))
             elif len(params) == 1:
                 frame_index = int(params[0])
                 rect = self.server.get_albula_rect(frame_index)
                 if rect != None:
-                    return '0 OK get_rect {0} {1} {2} {3} {4}'.format(frame_index, rect.left, rect.top, rect.width, rect.height)
+                    self.send_text_response('OK get_rect {} {} {} {} {}'.format(frame_index, rect.left, rect.top, rect.width, rect.height))
                 else:
-                    return '0 OK get_rect {0} {1} {2} {3} {4}'.format(frame_index, -1, -1, -1, -1)
+                    self.send_text_response('OK get_rect {} {} {} {} {}'.format(frame_index, -1, -1, -1, -1))
             else:
-                return '102 ERROR illegal_arguments'
+                self.send_text_response('ERROR:102 rect illegal_arguments')
         elif cmd == 'LIMIT':
             if len(params) == 3:
                 frame_index = int(params[0])
@@ -249,27 +249,27 @@ class AlbulaRequestHandler(BLRequestHandler):
                 upper_limit = float(params[2])
                 errno = self.server.set_albula_count_limit(frame_index, lower_limit, upper_limit)
                 if errno:
-                    return '{0} ERROR set_limit {1} {2} {3}'.format(errno, frame_index, lower_limit, upper_limit)
+                    self.send_text_response('ERROR:{} set_limit {} {} {}'.format(errno, frame_index, lower_limit, upper_limit))
                 else:
-                    return '{0} OK set_limit {1} {2} {3}'.format(errno, frame_index, lower_limit, upper_limit)
+                    self.send_text_response('OK set_limit {} {} {}'.format(frame_index, lower_limit, upper_limit))
             elif len(params) == 1:
                 frame_index = int(params[0])
                 count_limit = self.server.get_albula_count_limit(frame_index)
                 if (count_limit != None):
-                    return '0 OK get_limit {0} {1} {2}'.format(frame_index, count_limit["lowerCountLimit"], count_limit["upperCountLimit"])
+                    self.send_text_response('OK get_limit {} {} {}'.format(frame_index, count_limit["lowerCountLimit"], count_limit["upperCountLimit"]))
                 else:
-                    return '0 OK get_limit {0} {1} {2}'.format(frame_index, None, None)
+                    self.send_text_response('OK get_limit {} {} {}'.format(frame_index, None, None))
             else:
-                return '102 ERROR illegal_arguments'
+                self.send_text_response('ERROR:102 limit illegal_arguments')
         elif cmd == 'COUNT':
             if len(params) == 1:
                 frame_index = int(params[0])
                 count = self.server.get_albula_count(frame_index)
-                return '0 OK get_count {0} {1}'.format(frame_index, count)
+                self.send_text_response('OK get_count {} {}'.format(frame_index, count))
             else:
-                return '102 ERROR illegal_arguments'
+                self.send_text_response('ERROR:102 count illegal_arguments')
         else:
-            return '101 ERROR unknown_command.'
+            self.send_text_response('ERROR:101 {} unknown_command'.format(cmd))
 
 
 if __name__ == '__main__':
