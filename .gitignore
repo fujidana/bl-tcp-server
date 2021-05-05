@@ -1,0 +1,10 @@
+.DS_Store
+._*
+*.pyc
+*.npy
+*.npz
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
