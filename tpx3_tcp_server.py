@@ -62,12 +62,14 @@ class TPX3RequestHandler(BLRequestHandler):
             else:
                 self.send_text_response('OK abort')
         elif cmd == 'LAST_FRAME':
-            _, frame_event = dev.lastAcqFrameRefInc().subFrames()
-            
-            self.send_text_response('OK last_frame int16 {}'.format(frame_event.size()))
-            # send binary data
-            self.request.sendall(array.array('h', frame_event.data()))
-
+            if not dev.lastAcqFrameRefInc():
+                self.send_text_response('ERROR:103 no_last_frame')
+            else:
+                _, frame_event = dev.lastAcqFrameRefInc().subFrames()
+                
+                self.send_text_response('OK last_frame int16 {}'.format(frame_event.size()))
+                # send binary data
+                self.request.sendall(array.array('h', frame_event.data()))
         else:
             self.send_text_response('ERROR:101 unknown_command')
 
