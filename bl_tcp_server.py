@@ -1,14 +1,16 @@
-"""Abstract superclass of TCP-IP server request handlers,
+"""Abstract superclass of the TCP-IP server base request handler,
  developed for the purpose of responding a command from SPEC servers via TCP-IP socket communication.
 
-Acceptable command format is as follows:
+The basic rules of a command set this request handler handles are:
 
 * Each statement is separated by new line (LF or CR+LF).
 * Each statement consist of one command and optional arguments, separated by a white space.
 * "QUIT" is a special command that terminates the server.
 """
 
-# import statement for Python 2.7. This line is Harmless to Python 3.
+# Import statement for Python 2.7 code more compatible with Python 3.x.
+# This line is Harmless to Python 3.
+# Comment out this line when used in Pixet Pro for Advacam TimePIX3 control.
 from __future__ import division, print_function, unicode_literals, absolute_import
 
 # `SocketServer` in Python 2.x is renamed `socketserver` in Python 3.x.
@@ -63,7 +65,7 @@ class BLRequestHandler(socketserver.BaseRequestHandler):
 
     def process_command(self, cmd, params):
         """Dummy implementation that returns capitalized input command and parameters.
-        Subclasses must overwrite it.
+        Subclasses must overwrite this method.
         """
 
         if params:
@@ -79,8 +81,10 @@ def shutdown_server(server):
     server.shutdown()
     server.server_close()
 
-if __name__ == '__main__':
-    # create server and run it
-    SERVER = socketserver.TCPServer(('', 10000), BLRequestHandler)
-    SERVER.serve_forever()
-    SERVER.server_close()
+# # main code to test this TCP server, 
+# # which simply returns the input text after capitalization.
+# if __name__ == '__main__':
+#    # create server and run it
+#    SERVER = socketserver.TCPServer(('', 10000), BLRequestHandler)
+#    SERVER.serve_forever()
+#    SERVER.server_close()
