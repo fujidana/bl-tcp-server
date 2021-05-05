@@ -47,6 +47,12 @@ class TPX3RequestHandler(BLRequestHandler):
                     self.send_text_response('OK acquire')
             else:
                 self.send_text_response('ERROR:102 illegal_arguments')
+        elif cmd == 'ACQUIRE_NOWAIT':
+            if len(params) == 2:
+                Thread(target=dev.doSimpleAcquisition, args=(int(params[0]), float(params[1]), pixet.PX_FTYPE_NONE, "")).start()
+                self.send_text_response('UNKNOWN acquire_nowait')
+            else:
+                self.send_text_response('ERROR:102 illegal_arguments')
         elif cmd == 'IS_RUNNING':
             self.send_text_response('OK is_running {:d}'.format(dev.isAcquisitionRunning()))
         elif cmd == 'ABORT':
@@ -54,7 +60,7 @@ class TPX3RequestHandler(BLRequestHandler):
             if errno:
                 self.send_text_response('ERROR:{} abort'.format(errno))
             else:
-                self.send_text_response('OK abort 0')
+                self.send_text_response('OK abort')
         elif cmd == 'LAST_FRAME':
             _, frame_event = dev.lastAcqFrameRefInc().subFrames()
             
