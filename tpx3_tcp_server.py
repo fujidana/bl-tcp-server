@@ -64,7 +64,7 @@ class TPX3RequestHandler(BLRequestHandler):
         elif cmd == 'LAST_FRAME':
             _, frame_event = dev.lastAcqFrameRefInc().subFrames()
             
-            self.send_text_response('OK last_frame int16 {}', frame_event.size())
+            self.send_text_response('OK last_frame int16 {}'.format(frame_event.size()))
             # send binary data
             self.request.sendall(array.array('h', frame_event.data()))
 
