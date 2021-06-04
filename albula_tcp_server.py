@@ -14,13 +14,13 @@ The execution of following code in Command Prompt launches the server
 with its port 10001 and Pilatus server sharing point "W:/".
 
 ```
-# if Anaconda is installed in a user domain
-call %HOMEPATH%\Anaconda3\Scripts\activate.bat py27
+@REM Uncomment below if Anaconda is installed in a user domain
+@REM call %HOMEPATH%\Anaconda3\Scripts\activate.bat py27
 
-# else if Anaconda is installed in the system domain
-call %PROGRAMDATA%\Anaconda3\Scripts\activate.bat py27
+@REM Uncomment below if Anaconda is installed in the system domain
+@REM call %PROGRAMDATA%\Anaconda3\Scripts\activate.bat py27
 
-python albula_tcp_server.py W:/ 10001
+python albula_tcp_server.py 10001 W:/
 ```
 """
 
@@ -28,6 +28,7 @@ from __future__ import division, print_function, unicode_literals
 
 import sys
 import os
+import re
 import socket
 from socketserver import TCPServer
 from bl_tcp_server import BLRequestHandler
@@ -287,18 +288,26 @@ class AlbulaRequestHandler(BLRequestHandler):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        server_address = socket.gethostname(), 10748
-    elif len(sys.argv) == 3:
-        server_address = socket.gethostname(), int(sys.argv[2])
-    elif len(sys.argv) == 4:
-        server_address = sys.argv[2], int(sys.argv[3])
-    else:
-        print("Invalid arguments.\nUsage: ./albula_tcp_server.py base_dir [[host] port].")
+    if len(sys.argv) != 2 and len(sys.argv) != 3:
+        print("Invalid arguments.\nUsage: python albula_tcp_server.py ADDRESS_OR_PORT [BASE_DIR]")
         sys.exit()
 
+    if re.match(r'^[0-9]+$', sys.argv[1]):
+        server_address = socket.gethostname(), int(sys.argv[1])
+    else:
+        matched = re.match(r'^([0-9a-zA-Z.]+):([0-9]+)$', sys.argv[1])
+        if matched:
+            server_address = matched.group(1), int(matched.group(2))
+        else:
+            print("Invalid ADDRESS_OR_PORT.\nUsage: python albula_tcp_server.py ADDRESS_OR_PORT [BASE_DIR]")
+            sys.exit()
+
+    image_base_dir = sys.argv[2] if len(sys.argv) == 3 else './'
+
+    print(server_address, image_base_dir)
+
     # initialize a server.
-    server = AlbulaTCPServer(server_address, AlbulaRequestHandler, base_dir=sys.argv[1])
+    server = AlbulaTCPServer(server_address, AlbulaRequestHandler, base_dir=sys.argv[2])
 
     # show an Albula window with a single subframe.
     server.set_albula_frame_number(1)
