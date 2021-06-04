@@ -9,6 +9,19 @@ Commands available:
 * limit frame_index [lower_count_limit upper_count_limit]
 * count frame_index
 * quit
+
+The execution of following code in Command Prompt launches the server 
+with its port 10001 and Pilatus server sharing point "W:/".
+
+```
+# if Anaconda is installed in a user domain
+call %HOMEPATH%\Anaconda3\Scripts\activate.bat py27
+
+# else if Anaconda is installed in the system domain
+call %PROGRAMDATA%\Anaconda3\Scripts\activate.bat py27
+
+python albula_tcp_server.py W:/ 10001
+```
 """
 
 from __future__ import division, print_function, unicode_literals
@@ -16,11 +29,12 @@ from __future__ import division, print_function, unicode_literals
 import sys
 import os
 import socket
-# from socketserver import TCPServer
+from socketserver import TCPServer
 from bl_tcp_server import BLRequestHandler
 
 albula_base_dir = ''
 if (os.name == 'nt'):
+    # os.environ['PROGRAMFILES'] indicates the path to "Program Files (x86)" folder if python is 32-bit.
     albula_base_dir = os.path.join(os.environ['PROGRAMFILES'], 'DECTRIS', 'ALBULA', 'ALBULA_3.3.3')
 elif (os.name == 'posix'):
     albula_base_dir = '/opt/dectris/albula/4.0'
@@ -33,18 +47,18 @@ import dectris.albula
 
 # constants
 
-ACTIVE_COLOR = (0, 128, 0)    
+ACTIVE_COLOR = (0, 128, 0)
 NON_ACTIVE_COLOR = (0, 64, 0)
 
 
 #  class definision
 
-class AlbulaTCPServer(TCPServer):
+class AlbulaTCPServer(TCPServer, object):
     """Albula TCP server class.
     """
 
     def __init__(self, server_address, requestHandlerClass, bind_and_activate=True, base_dir = './', det_num = 0):
-        super.__init__(server_address, requestHandlerClass, bind_and_activate)
+        super(AlbulaTCPServer, self).__init__(server_address, requestHandlerClass, bind_and_activate)
 
         self.main_frame = dectris.albula.openMainFrame(disableClose = True)
         self.base_dir = base_dir
@@ -67,7 +81,7 @@ class AlbulaTCPServer(TCPServer):
     #             self.sub_frames[i] = sub_frame
 
     def server_close(self):
-        super.server_close(self)
+        super(AlbulaTCPServer, self).server_close()
         self.close_albula()
 
     def close_albula(self):
@@ -291,4 +305,6 @@ if __name__ == '__main__':
 
     # run the server.
     server.serve_forever()
+
+    # close the server after the service is stopped (by server.shutdown() from another thread, for example).
     server.server_close()

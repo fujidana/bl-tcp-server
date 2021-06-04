@@ -9,9 +9,8 @@ The basic rules of a command set this request handler handles are:
 """
 
 # Import statement for Python 2.7 code more compatible with Python 3.x.
-# This line is Harmless to Python 3.
-# Comment out this line when used in Pixet Pro for Advacam TimePIX3 control.
-from __future__ import division, print_function, unicode_literals, absolute_import
+# Commented out due to inconpatibility with Pixet Pro for Advacam TimePIX3 control.
+# from __future__ import division, print_function, unicode_literals, absolute_import
 
 # `SocketServer` in Python 2.x is renamed `socketserver` in Python 3.x.
 # However, in Python 2.7, it looks `socketserver` can be used as an alias to `SocketServer` .
@@ -79,7 +78,7 @@ class BLRequestHandler(socketserver.BaseRequestHandler):
 
 def shutdown_server(server):
     server.shutdown()
-    server.server_close()
+    # server.server_close()
 
 # # main code to test this TCP server, 
 # # which simply returns the input text after capitalization.

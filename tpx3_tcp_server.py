@@ -76,7 +76,7 @@ class TPX3RequestHandler(BLRequestHandler):
 
 def shutdown_server(server):
     server.shutdown()
-    server.server_close()
+    # server.server_close()
 
 # kill the server
 def exitCallback(value):
@@ -90,7 +90,7 @@ def onAbort():
     Thread(target=shutdown_server, args=(SERVER,)).start()
     print("Aborted")
 
-
+# main
 devices = pixet.devicesTpx3()
 if len(devices) == 0:
     print("No TPX3 device found. Exit.")
@@ -107,4 +107,6 @@ dev.setOperationMode(pixet.PX_TPX3_OPM_EVENT_ITOT)
 
 # run the server.
 SERVER.serve_forever()
+
+# close the server after the service is stopped (by server.shutdown() from another thread, for example).
 SERVER.server_close()
