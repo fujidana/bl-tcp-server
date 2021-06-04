@@ -23,4 +23,4 @@ if __name__ == '__main__':
         print('Invalid arguments.\nUsage: ./bl_tcp_client.py PORT MESSAGE...')
         sys.exit()
 
-    client('127.0.0.1', int(sys.argv[1]), ' '.join(sys.argv[2:]) + '\n')
+    client(socket.gethostname(), int(sys.argv[1]), ' '.join(sys.argv[2:]) + '\n')
