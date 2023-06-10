@@ -1,4 +1,7 @@
-"""TCP server of Advacam TimePIX3 device to communicate with SPEC software.
+"""TCP server that recieves a message from SPEC software and 
+controls an Advacam TimePIX3 device.
+
+The following commands are available:
 
 * IS_CONNECTED
 * INFO
@@ -7,18 +10,22 @@
 * IS_RUNNING
 * ABORT
 * LAST_FRAME
+* KILL : close both Pixet Pro and this server
+* QUIT : close this server. (implemented by the parent class)
+
+tcp_server_example.py in Pixet Pro sample script was used as a reference.
 """
 
 import socketserver
 from threading import Thread
-#from bl_tcp_server import BLRequestHandler
+# from bl_tcp_server import BLRequestHandler
 
 import sys
 import array
 
 PORT = 59876
 
-# dev = pixet.devices()[0]  # get first device
+
 class TPX3RequestHandler(BLRequestHandler):
     """Concrete subclass of an abstract request handler."""
 
@@ -26,21 +33,23 @@ class TPX3RequestHandler(BLRequestHandler):
         """Processing command received from client
         """
 
-        global dev
+        global TPX3
+        # tpx3 = pixet.devicesTpx3()[0]
+
         cmd = cmd.upper()
         if cmd == 'IS_CONNECTED':
-            self.send_text_response('OK is_connected {:d}'.format(dev.isConnected()))
+            self.send_text_response('OK is_connected {:d}'.format(TPX3.isConnected()))
         elif cmd == 'INFO':
-            self.send_text_response('OK info {} {} {}'.format(dev.width(), dev.height(), dev.dataType()))
+            self.send_text_response('OK info {} {} {}'.format(TPX3.width(), TPX3.height(), TPX3.dataType()))
         elif cmd == 'CONFIG':
-            dev.setOperationMode(pixet.PX_TPX3_OPM_EVENT_ITOT)
+            TPX3.setOperationMode(pixet.PX_TPX3_OPM_EVENT_ITOT)
             self.send_text_response('OK config')
         elif cmd == 'ACQUIRE':
             if len(params) == 2:
                 # acquire data without file output
                 # this method returns after the acquisition is completed
-                errno = dev.doSimpleAcquisition(int(params[0]), float(params[1]), pixet.PX_FTYPE_NONE, "")
-                # errno = dev.doSimpleIntegralAcquisition(int(params[0]), float(params[1]), pixet.PX_FTYPE_NONE, "")
+                errno = TPX3.doSimpleAcquisition(int(params[0]), float(params[1]), pixet.PX_FTYPE_NONE, "")
+                # errno = TPX3.doSimpleIntegralAcquisition(int(params[0]), float(params[1]), pixet.PX_FTYPE_NONE, "")
                 if errno:
                     self.send_text_response('ERROR:{} acquire.'.format(errno))
                 else:
@@ -49,34 +58,41 @@ class TPX3RequestHandler(BLRequestHandler):
                 self.send_text_response('ERROR:102 illegal_arguments')
         elif cmd == 'ACQUIRE_NOWAIT':
             if len(params) == 2:
-                Thread(target=dev.doSimpleAcquisition, args=(int(params[0]), float(params[1]), pixet.PX_FTYPE_NONE, "")).start()
+                Thread(target=TPX3.doSimpleAcquisition, args=(int(params[0]), float(params[1]), pixet.PX_FTYPE_NONE, "")).start()
                 self.send_text_response('UNKNOWN acquire_nowait')
             else:
                 self.send_text_response('ERROR:102 illegal_arguments')
         elif cmd == 'IS_RUNNING':
-            self.send_text_response('OK is_running {:d}'.format(dev.isAcquisitionRunning()))
+            self.send_text_response('OK is_running {:d}'.format(TPX3.isAcquisitionRunning()))
         elif cmd == 'ABORT':
-            errno = dev.abortOperation()
+            errno = TPX3.abortOperation()
             if errno:
                 self.send_text_response('ERROR:{} abort'.format(errno))
             else:
                 self.send_text_response('OK abort')
         elif cmd == 'LAST_FRAME':
-            if not dev.lastAcqFrameRefInc():
+            frame = TPX3.lastAcqFrameRefInc()
+            if not frame:
                 self.send_text_response('ERROR:103 no_last_frame')
             else:
-                _, frame_event = dev.lastAcqFrameRefInc().subFrames()
-                
-                self.send_text_response('OK last_frame int16 {}'.format(frame_event.size()))
-                # send binary data
-                self.request.sendall(array.array('h', frame_event.data()))
+                # subframes[0]: iTOT, subframes[1]: EVENT.
+                subframes = frame.subFrames()
+
+                # send header text and binary data
+                self.send_text_response('OK last_frame int16 {}'.format(subframes[1].size()))
+                self.request.sendall(array.array('h', subframes[1].data()))
+
+                # release the frame
+                frame.destroy()
+                # gc.collect()
+        elif cmd == 'KILL':
+            # It looks the server is closed by exitCallback, and so,
+            # it is not neccessary to call `shutdown_server` here.
+            self.send_text_response('UNKNOWN kill')
+            pixet.exitPixet()
         else:
             self.send_text_response('ERROR:101 unknown_command')
 
-
-def shutdown_server(server):
-    server.shutdown()
-    # server.server_close()
 
 # kill the server
 def exitCallback(value):
@@ -87,26 +103,32 @@ def exitCallback(value):
 # when abort pressed stop the server
 def onAbort():
     global SERVER
-    Thread(target=shutdown_server, args=(SERVER,)).start()
+
+    def abort_server(server):
+        server.shutdown()
+        server.server_close()
+
+    Thread(target=abort_server, args=(SERVER,)).start()
     print("Aborted")
 
 # main
-devices = pixet.devicesTpx3()
-if len(devices) == 0:
-    print("No TPX3 device found. Exit.")
-    sys.exit()
+if __name__ == '__main__':
+    devices = pixet.devicesTpx3()
+    if len(devices) == 0:
+        print("No TPX3 device found. Exit.")
+        sys.exit()
 
-dev = devices[0]
+    # set the operation mode EVENT+iTOT
+    TPX3 = devices[0]
+    TPX3.setOperationMode(pixet.PX_TPX3_OPM_EVENT_ITOT)
+    del devices
 
-# initialize a server.
-SERVER = socketserver.ThreadingTCPServer(('', PORT), TPX3RequestHandler)
-pixet.registerEvent("Exit", exitCallback, exitCallback)
+    # initialize a server.
+    SERVER = socketserver.ThreadingTCPServer(('', PORT), TPX3RequestHandler)
+    pixet.registerEvent("Exit", exitCallback, exitCallback)
 
-# set the operation mode EVENT+iTOT
-dev.setOperationMode(pixet.PX_TPX3_OPM_EVENT_ITOT)
+    # run the server.
+    SERVER.serve_forever()
 
-# run the server.
-SERVER.serve_forever()
-
-# close the server after the service is stopped (by server.shutdown() from another thread, for example).
-SERVER.server_close()
+    # close the server after the service is stopped (by server.shutdown() from another thread, for example).
+    SERVER.server_close()
