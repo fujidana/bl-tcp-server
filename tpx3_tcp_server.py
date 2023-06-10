@@ -1,5 +1,5 @@
-"""TCP server that recieves a message from SPEC software and 
-controls an Advacam TimePIX3 device.
+"""TCP server that controls an Advacam TimePIX3 device in compliance
+with a message from SPEC software.
 
 The following commands are available:
 
