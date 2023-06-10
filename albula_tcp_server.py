@@ -10,7 +10,7 @@ Commands available:
 * count frame_index
 * quit
 
-The execution of following code in Command Prompt launches the server 
+The following code in Command Prompt launches the server 
 with its port 10001 and Pilatus server sharing point "W:/".
 
 ```
@@ -293,10 +293,12 @@ if __name__ == '__main__':
         sys.exit()
 
     if re.match(r'^[0-9]+$', sys.argv[1]):
+        # first argument consists of digits, e.g., "10001"
         server_address = socket.gethostname(), int(sys.argv[1])
     else:
         matched = re.match(r'^([0-9a-zA-Z.]+):([0-9]+)$', sys.argv[1])
         if matched:
+            # first argument consists of address and port, e.g., "127.0.0.1:10001"
             server_address = matched.group(1), int(matched.group(2))
         else:
             print("Invalid ADDRESS_OR_PORT.\nUsage: python albula_tcp_server.py ADDRESS_OR_PORT [BASE_DIR]")
@@ -304,7 +306,7 @@ if __name__ == '__main__':
 
     image_base_dir = sys.argv[2] if len(sys.argv) == 3 else './'
 
-    print(server_address, image_base_dir)
+    # print(server_address, image_base_dir)
 
     # initialize a server.
     server = AlbulaTCPServer(server_address, AlbulaRequestHandler, base_dir=sys.argv[2])

@@ -1,10 +1,10 @@
-"""Abstract superclass of the TCP-IP server base request handler,
- developed for the purpose of responding a command from SPEC servers via TCP-IP socket communication.
+"""Abstract superclass of socketserver.BaseRequestHandler,
+used by socketserver.TCPServer to communcate with SPEC software.
 
 The basic rules of a command set this request handler handles are:
 
 * Each statement is separated by new line (LF or CR+LF).
-* Each statement consist of one command and optional arguments, separated by a white space.
+* Each statement consists of one command and optional arguments, separated by a white space.
 * "QUIT" is a special command that terminates the server.
 """
 
@@ -12,17 +12,12 @@ The basic rules of a command set this request handler handles are:
 # Commented out due to inconpatibility with Pixet Pro for Advacam TimePIX3 control.
 # from __future__ import division, print_function, unicode_literals, absolute_import
 
-# `SocketServer` in Python 2.x is renamed `socketserver` in Python 3.x.
-# However, in Python 2.7, it looks `socketserver` can be used as an alias to `SocketServer` .
+# `SocketServer` in Python 2.7 has been renamed to `socketserver` in Python 3.
+# However, in Python 2.7, it looks `socketserver` can be used as an alias to `SocketServer`.
 import socketserver
 
 from threading import Thread
 
-# SocketServer.StreamRequestHandler allows one to use a file-like
-# object to handle the communication contents; e.g., one can use
-# readline() instead of raw recv() calls.
-# However, this class seems incompatible with spec software.
-# Therefore, we use a bit abstract class: socketserver.BaseRequestHandler.
 class BLRequestHandler(socketserver.BaseRequestHandler):
 
     def setup(self):
