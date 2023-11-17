@@ -4,6 +4,7 @@ with a message from SPEC software.
 The following commands are available:
 
 * IS_CONNECTED
+* RECONNECT
 * INFO
 * CONFIG
 * ACQUIRE acq_count acq_time
@@ -39,6 +40,8 @@ class TPX3RequestHandler(BLRequestHandler):
         cmd = cmd.upper()
         if cmd == 'IS_CONNECTED':
             self.send_text_response('OK is_connected {:d}'.format(TPX3.isConnected()))
+        elif cmd == 'RECONNECT':
+            self.send_text_response('OK reconnect {:d}'.format(TPX3.reconnect()))
         elif cmd == 'INFO':
             self.send_text_response('OK info {} {} {}'.format(TPX3.width(), TPX3.height(), TPX3.dataType()))
         elif cmd == 'CONFIG':
@@ -51,7 +54,7 @@ class TPX3RequestHandler(BLRequestHandler):
                 errno = TPX3.doSimpleAcquisition(int(params[0]), float(params[1]), pixet.PX_FTYPE_NONE, "")
                 # errno = TPX3.doSimpleIntegralAcquisition(int(params[0]), float(params[1]), pixet.PX_FTYPE_NONE, "")
                 if errno:
-                    self.send_text_response('ERROR:{} acquire.'.format(errno))
+                    self.send_text_response('ERROR:{} acquire'.format(errno))
                 else:
                     self.send_text_response('OK acquire')
             else:
@@ -100,7 +103,7 @@ def exitCallback(value):
     print("Exit")
     SERVER.server_close()
 
-# when abort pressed stop the server
+# Stop the server when "abort" button is pressed
 def onAbort():
     global SERVER
 
