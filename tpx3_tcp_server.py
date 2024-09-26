@@ -12,6 +12,7 @@ The following commands are available:
 * IS_RUNNING
 * ABORT
 * LAST_FRAME
+* MKDIR dirpath
 * KILL : close both Pixet Pro and this server
 * QUIT : close this server. (implemented by the parent class)
 
@@ -107,6 +108,13 @@ class TPX3RequestHandler(BLRequestHandler):
                 # release the frame
                 frame.destroy()
                 # gc.collect()
+        elif cmd == 'MKDIR':
+            if len(params) == 1:
+                dirname = os.path.join(DATA_DIR, params[0])
+                os.makedirs(dirname, exist_ok=True)
+                self.send_text_response('OK mkdir {}'.format(dirname))
+            else:
+                self.send_text_response('ERROR:102 illegal_arguments')
         elif cmd == 'KILL':
             # It looks the server is closed by exitCallback, and so,
             # it is not neccessary to call `shutdown_server` here.
