@@ -7,7 +7,8 @@ The following commands are available:
 * RECONNECT
 * INFO
 * CONFIG
-* ACQUIRE acq_count acq_time
+* ACQUIRE acq_count acq_time [filename]
+* ACQUIRE_NOWAIT acq_count acq_time [filename]
 * IS_RUNNING
 * ABORT
 * LAST_FRAME
@@ -22,9 +23,12 @@ from threading import Thread
 # from bl_tcp_server import BLRequestHandler
 
 import sys
+import os
+import os.path
 import array
 
 PORT = 59876
+DATA_DIR = 'D:\\PIXet Pro'
 
 
 class TPX3RequestHandler(BLRequestHandler):
@@ -48,10 +52,19 @@ class TPX3RequestHandler(BLRequestHandler):
             TPX3.setOperationMode(pixet.PX_TPX3_OPM_EVENT_ITOT)
             self.send_text_response('OK config')
         elif cmd == 'ACQUIRE':
+            # This command waits until the acquisition is completed.
             if len(params) == 2:
                 # acquire data without file output
-                # this method returns after the acquisition is completed
                 errno = TPX3.doSimpleAcquisition(int(params[0]), float(params[1]), pixet.PX_FTYPE_NONE, "")
+                # errno = TPX3.doSimpleIntegralAcquisition(int(params[0]), float(params[1]), pixet.PX_FTYPE_NONE, "")
+                if errno:
+                    self.send_text_response('ERROR:{} acquire'.format(errno))
+                else:
+                    self.send_text_response('OK acquire')
+            elif len(params) == 3:
+                # acquire data with file output
+                # pixet.PX_FTYPE_AUTODETECT
+                errno = TPX3.doSimpleAcquisition(int(params[0]), float(params[1]), pixet.PX_FTYPE_PNG, os.path.join(DATA_DIR, params[2]))
                 # errno = TPX3.doSimpleIntegralAcquisition(int(params[0]), float(params[1]), pixet.PX_FTYPE_NONE, "")
                 if errno:
                     self.send_text_response('ERROR:{} acquire'.format(errno))
@@ -60,8 +73,14 @@ class TPX3RequestHandler(BLRequestHandler):
             else:
                 self.send_text_response('ERROR:102 illegal_arguments')
         elif cmd == 'ACQUIRE_NOWAIT':
+            # This command does until the acquisition is completed.
             if len(params) == 2:
+                # acquire data without file output
                 Thread(target=TPX3.doSimpleAcquisition, args=(int(params[0]), float(params[1]), pixet.PX_FTYPE_NONE, "")).start()
+                self.send_text_response('UNKNOWN acquire_nowait')
+            elif len(params) == 3:
+                # acquire data with file output
+                Thread(target=TPX3.doSimpleAcquisition, args=(int(params[0]), float(params[1]), pixet.PX_FTYPE_PNG, os.path.join(DATA_DIR, params[2]))).start()
                 self.send_text_response('UNKNOWN acquire_nowait')
             else:
                 self.send_text_response('ERROR:102 illegal_arguments')
