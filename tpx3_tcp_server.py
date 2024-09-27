@@ -64,8 +64,13 @@ class TPX3RequestHandler(BLRequestHandler):
                     self.send_text_response('OK acquire')
             elif len(params) == 3:
                 # acquire data with file output
+                # create a data folder if it does not exist
+                destfile = os.path.join(DATA_DIR, params[2])
+                if not os.path.exists(os.path.dirname(destfile)):
+                    os.makedirs(os.path.dirname(destfile))
+
                 # pixet.PX_FTYPE_AUTODETECT
-                errno = TPX3.doSimpleAcquisition(int(params[0]), float(params[1]), pixet.PX_FTYPE_PNG, os.path.join(DATA_DIR, params[2]))
+                errno = TPX3.doSimpleAcquisition(int(params[0]), float(params[1]), pixet.PX_FTYPE_PNG, destfile)
                 # errno = TPX3.doSimpleIntegralAcquisition(int(params[0]), float(params[1]), pixet.PX_FTYPE_NONE, "")
                 if errno:
                     self.send_text_response('ERROR:{} acquire'.format(errno))
@@ -81,7 +86,14 @@ class TPX3RequestHandler(BLRequestHandler):
                 self.send_text_response('UNKNOWN acquire_nowait')
             elif len(params) == 3:
                 # acquire data with file output
-                Thread(target=TPX3.doSimpleAcquisition, args=(int(params[0]), float(params[1]), pixet.PX_FTYPE_PNG, os.path.join(DATA_DIR, params[2]))).start()
+
+                # create a data folder if it does not exist
+                destfile = os.path.join(DATA_DIR, params[2])
+                if not os.path.exists(os.path.dirname(destfile)):
+                    os.makedirs(os.path.dirname(destfile))
+
+                # pixet.PX_FTYPE_AUTODETECT
+                Thread(target=TPX3.doSimpleAcquisition, args=(int(params[0]), float(params[1]), pixet.PX_FTYPE_PNG, destfile)).start()
                 self.send_text_response('UNKNOWN acquire_nowait')
             else:
                 self.send_text_response('ERROR:102 illegal_arguments')
