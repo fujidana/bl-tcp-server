@@ -43,21 +43,31 @@ class TPX3RequestHandler(BLRequestHandler):
         # tpx3 = pixet.devicesTpx3()[0]
 
         cmd = cmd.upper()
+
         if cmd == 'IS_CONNECTED':
             self.send_text_response('OK is_connected {:d}'.format(TPX3.isConnected()))
+
         elif cmd == 'RECONNECT':
             self.send_text_response('OK reconnect {:d}'.format(TPX3.reconnect()))
+
         elif cmd == 'INFO':
-            self.send_text_response('OK info {} {} {}'.format(TPX3.width(), TPX3.height(), TPX3.dataType()))
+            # self.send_text_response('OK info {} {} {} \"{}\"'.format(TPX3.width(), TPX3.height(), TPX3.dataType(), TPX3.fullName()))
+            self.send_text_response('OK info {} {} {} {}'.format(TPX3.width(), TPX3.height(), TPX3.dataType(), TPX3.fullName().replace(' ', '_')))
+
         elif cmd == 'CONFIG':
             TPX3.setOperationMode(pixet.PX_TPX3_OPM_EVENT_ITOT)
             self.send_text_response('OK config')
+
         elif cmd == 'ACQUIRE':
             # This command waits until the acquisition is completed.
             if len(params) == 2:
                 # acquire data without file output
-                errno = TPX3.doSimpleAcquisition(int(params[0]), float(params[1]), pixet.PX_FTYPE_NONE, "")
-                # errno = TPX3.doSimpleIntegralAcquisition(int(params[0]), float(params[1]), pixet.PX_FTYPE_NONE, "")
+                frames = int(params[0])
+                if frames == 0:
+                    errno = TPX3.doSimpleAcquisition(1, float(params[1]), pixet.PX_FTYPE_NONE, "")
+                else:
+                    errno = TPX3.doSimpleIntegralAcquisition(frames, float(params[1]), pixet.PX_FTYPE_NONE, "")
+
                 if errno:
                     self.send_text_response('ERROR:{} acquire'.format(errno))
                 else:
@@ -70,8 +80,12 @@ class TPX3RequestHandler(BLRequestHandler):
                     os.makedirs(os.path.dirname(destfile))
 
                 # pixet.PX_FTYPE_AUTODETECT
-                errno = TPX3.doSimpleAcquisition(int(params[0]), float(params[1]), pixet.PX_FTYPE_PNG, destfile)
-                # errno = TPX3.doSimpleIntegralAcquisition(int(params[0]), float(params[1]), pixet.PX_FTYPE_NONE, "")
+                frames = int(params[0])
+                if frames == 0:
+                    errno = TPX3.doSimpleAcquisition(1, float(params[1]), pixet.PX_FTYPE_PNG, destfile)
+                else:
+                    errno = TPX3.doSimpleIntegralAcquisition(frames, float(params[1]), pixet.PX_FTYPE_NONE, "")
+
                 if errno:
                     self.send_text_response('ERROR:{} acquire'.format(errno))
                 else:
@@ -82,7 +96,12 @@ class TPX3RequestHandler(BLRequestHandler):
             # This command does until the acquisition is completed.
             if len(params) == 2:
                 # acquire data without file output
-                Thread(target=TPX3.doSimpleAcquisition, args=(int(params[0]), float(params[1]), pixet.PX_FTYPE_NONE, "")).start()
+                frames = int(params[0])
+                if frames == 0:
+                    Thread(target=TPX3.doSimpleAcquisition, args=(1, float(params[1]), pixet.PX_FTYPE_NONE, "")).start()
+                else:
+                    Thread(target=TPX3.doSimpleIntegralAcquisition, args=(frames, float(params[1]), pixet.PX_FTYPE_NONE, "")).start()
+
                 self.send_text_response('UNKNOWN acquire_nowait')
             elif len(params) == 3:
                 # acquire data with file output
@@ -93,18 +112,26 @@ class TPX3RequestHandler(BLRequestHandler):
                     os.makedirs(os.path.dirname(destfile))
 
                 # pixet.PX_FTYPE_AUTODETECT
-                Thread(target=TPX3.doSimpleAcquisition, args=(int(params[0]), float(params[1]), pixet.PX_FTYPE_PNG, destfile)).start()
+                frames = int(params[0])
+                if frames == 0:
+                    Thread(target=TPX3.doSimpleAcquisition, args=(1, float(params[1]), pixet.PX_FTYPE_PNG, destfile)).start()
+                else:
+                    Thread(target=TPX3.doSimpleIntegralAcquisition, args=(frames, float(params[1]), pixet.PX_FTYPE_PNG, destfile)).start()
+
                 self.send_text_response('UNKNOWN acquire_nowait')
             else:
                 self.send_text_response('ERROR:102 illegal_arguments')
+
         elif cmd == 'IS_RUNNING':
             self.send_text_response('OK is_running {:d}'.format(TPX3.isAcquisitionRunning()))
+
         elif cmd == 'ABORT':
             errno = TPX3.abortOperation()
             if errno:
                 self.send_text_response('ERROR:{} abort'.format(errno))
             else:
                 self.send_text_response('OK abort')
+
         elif cmd == 'LAST_FRAME':
             frame = TPX3.lastAcqFrameRefInc()
             if not frame:
@@ -120,6 +147,7 @@ class TPX3RequestHandler(BLRequestHandler):
                 # release the frame
                 frame.destroy()
                 # gc.collect()
+
         elif cmd == 'MKDIR':
             if len(params) == 1:
                 dirname = os.path.join(DATA_DIR, params[0])
@@ -127,11 +155,13 @@ class TPX3RequestHandler(BLRequestHandler):
                 self.send_text_response('OK mkdir {}'.format(dirname))
             else:
                 self.send_text_response('ERROR:102 illegal_arguments')
+
         elif cmd == 'KILL':
             # It looks the server is closed by exitCallback, and so,
             # it is not neccessary to call `shutdown_server` here.
             self.send_text_response('UNKNOWN kill')
             pixet.exitPixet()
+
         else:
             self.send_text_response('ERROR:101 unknown_command')
 
