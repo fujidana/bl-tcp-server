@@ -79,10 +79,10 @@ class TPX3RequestHandler(BLRequestHandler):
                 if not os.path.exists(os.path.dirname(destfile)):
                     os.makedirs(os.path.dirname(destfile))
 
-                # pixet.PX_FTYPE_AUTODETECT
+                # pixet.PX_FTYPE_AUTODETECT, PX_FTYPE_PNG
                 frames = int(params[0])
                 if frames == 0:
-                    errno = TPX3.doSimpleAcquisition(1, float(params[1]), pixet.PX_FTYPE_PNG, destfile)
+                    errno = TPX3.doSimpleAcquisition(1, float(params[1]), pixet.PX_FTYPE_AUTODETECT, destfile)
                 else:
                     errno = TPX3.doSimpleIntegralAcquisition(frames, float(params[1]), pixet.PX_FTYPE_NONE, "")
 
@@ -114,9 +114,9 @@ class TPX3RequestHandler(BLRequestHandler):
                 # pixet.PX_FTYPE_AUTODETECT
                 frames = int(params[0])
                 if frames == 0:
-                    Thread(target=TPX3.doSimpleAcquisition, args=(1, float(params[1]), pixet.PX_FTYPE_PNG, destfile)).start()
+                    Thread(target=TPX3.doSimpleAcquisition, args=(1, float(params[1]), pixet.PX_FTYPE_AUTODETECT, destfile)).start()
                 else:
-                    Thread(target=TPX3.doSimpleIntegralAcquisition, args=(frames, float(params[1]), pixet.PX_FTYPE_PNG, destfile)).start()
+                    Thread(target=TPX3.doSimpleIntegralAcquisition, args=(frames, float(params[1]), pixet.PX_FTYPE_AUTODETECT, destfile)).start()
 
                 self.send_text_response('UNKNOWN acquire_nowait')
             else:
